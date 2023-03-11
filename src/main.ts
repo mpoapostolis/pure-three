@@ -4,8 +4,6 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import scene from "./components/scene";
 import { hero } from "./components/hero";
 
-// Create a Three.js scene
-scene.background = new THREE.Color(0xffffff);
 // Set up a camera
 const camera = new THREE.PerspectiveCamera(
   75,
