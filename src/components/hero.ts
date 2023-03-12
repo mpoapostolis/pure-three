@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import scene from "./scene";
+import scene from "../scenes/main";
 
 export const W = "w";
 export const A = "a";
@@ -30,21 +30,29 @@ class Hero {
 
   constructor() {
     loader.load("/models/hero.glb", (gltf) => {
+      const group = new THREE.Group();
+      group.add(gltf.scene);
+      const capsule = new THREE.CapsuleGeometry(0.4, 1);
+      const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+      const mesh = new THREE.Mesh(capsule, material);
+      material.wireframe = true;
+      group.add(mesh);
+
       const animationsMap: Map<heroActions, THREE.AnimationAction> = new Map();
       // Add the loaded model to the scene
-      scene.add(gltf.scene);
+      group.add(gltf.scene);
       gltf.scene.scale.set(0.01, 0.01, 0.01);
-      gltf.scene.position.set(0, 1, 0);
-      // // Set up the idle animation
       const mixer = new THREE.AnimationMixer(gltf.scene);
+
+      scene.add(group);
+
       gltf.animations
         .filter((animation) => animation.name !== "T-Pose (No Animation)")
         .forEach((animation) => {
-          console.log(animation.name);
           const action = mixer.clipAction(animation);
           animationsMap.set(animation.name as heroActions, action);
         });
-      this.model = gltf.scene;
+      this.model = group;
       this.mixer = mixer;
       this.animationsMap = animationsMap;
       const idle = animationsMap.get("Idle")?.getClip();
@@ -53,7 +61,6 @@ class Hero {
   }
 
   update(action: heroActions) {
-    console.log("currentAction", action);
     if (this.action === action) return;
     const currentAction = this.animationsMap.get(this.action);
     const nextAction = this.animationsMap.get(action);
@@ -75,6 +82,7 @@ function keyToAction(_key: string, isShiftPressed: boolean) {
 
     case W:
       action = isShiftPressed ? "Running" : "Walking";
+
       break;
     case A:
       action = isShiftPressed ? "LeftStrafe" : "WalkingLeftTurn";
@@ -94,7 +102,6 @@ function keyToAction(_key: string, isShiftPressed: boolean) {
 
 document.addEventListener("keydown", (event) => {
   let action = keyToAction(event.key, event.shiftKey);
-  console.log("action", action);
   hero.update(action);
 });
 
