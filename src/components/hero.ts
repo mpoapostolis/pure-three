@@ -1,6 +1,9 @@
+import RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import scene from "../scenes/main";
+import { controls } from "./controls";
+import { heroRb } from "./physics";
 
 export const W = "w";
 export const A = "a";
@@ -27,6 +30,7 @@ class Hero {
   mixer?: THREE.AnimationMixer;
   animationsMap: Map<string, THREE.AnimationAction> = new Map(); // Walk, Run, Idle
   action: heroActions = "Idle";
+  rb?: RAPIER.RigidBody;
 
   constructor() {
     loader.load("/models/hero.glb", (gltf) => {
@@ -65,38 +69,70 @@ class Hero {
     const currentAction = this.animationsMap.get(this.action);
     const nextAction = this.animationsMap.get(action);
     if (currentAction && nextAction) {
-      currentAction.fadeOut(0.5);
-      nextAction.reset().fadeIn(0.5).play();
+      currentAction.fadeOut(0);
+      nextAction.reset().fadeIn(0).play();
     }
     this.action = action;
   }
 }
 
+function applyForce(force: RAPIER.Vector) {
+  heroRb.setLinvel(force, true);
+}
+
 function keyToAction(_key: string, isShiftPressed: boolean) {
+  const movementSpeed = isShiftPressed ? 3 : 1;
+
+  const az = controls.getAzimuthalAngle();
+  const x = Math.sin(az);
+  const z = Math.cos(az);
+  const movement = {
+    x: x * movementSpeed,
+    y: 0,
+    z: z * movementSpeed,
+  };
+
   const key = _key.toLocaleLowerCase();
   let action: heroActions;
   switch (key) {
     case SPACE:
       action = "Jumping";
+      movement.z *= -0.3;
+      movement.x *= -0.3;
+      applyForce(movement);
       break;
-
     case W:
       action = isShiftPressed ? "Running" : "Walking";
-
+      movement.z *= -1;
+      movement.x *= -1;
+      applyForce(movement);
       break;
     case A:
       action = isShiftPressed ? "LeftStrafe" : "WalkingLeftTurn";
+      applyForce({
+        x: -movement.z,
+        y: 0,
+        z: 0,
+      });
       break;
     case S:
       action = isShiftPressed ? "RunningBackward" : "WalkingBackward";
+      applyForce(movement);
       break;
     case D:
       action = isShiftPressed ? "RightStrafe" : "RightStrafeWalking";
+      applyForce({
+        x: movement.z,
+        y: 0,
+        z: 0,
+      });
       break;
+
     default:
       action = "Idle";
       break;
   }
+
   return action;
 }
 
@@ -106,6 +142,15 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("keyup", () => {
+  heroRb.setLinvel(
+    {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    true
+  );
+
   hero.update("Idle");
 });
 export const hero = new Hero();

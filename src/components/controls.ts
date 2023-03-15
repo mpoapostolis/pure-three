@@ -9,9 +9,10 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.1;
 //controls.update() must be called after any manual changes to the camera's transform
 camera.position.set(0, 4, -3);
+
 controls.update();
-controls.maxPolarAngle = Math.PI / 2.3;
-controls.maxDistance = 7;
+controls.maxPolarAngle = Math.PI / 2;
+controls.maxDistance = 5;
 controls.minDistance = 3;
 controls.mouseButtons = {
   MIDDLE: THREE.MOUSE.DOLLY,

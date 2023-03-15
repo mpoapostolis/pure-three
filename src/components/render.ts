@@ -7,25 +7,19 @@ import { heroRb, world } from "./physics";
 import { renderer } from "./renderer";
 
 const clock = new THREE.Clock();
-
 export function animate() {
   let mixerUpdateDelta = clock.getDelta();
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   hero?.mixer?.update(mixerUpdateDelta);
   world.step();
-  heroRb.addForce(
-    {
-      x: 0,
-      y: 0,
-      z: 0.1,
-    },
-    true
-  );
+  const pos = heroRb.translation();
+  if (hero.model?.rotation)
+    hero.model.rotation.y = -Math.PI + controls.getAzimuthalAngle();
 
-  // console.log(hero?.rb?.translation());
-  // let position = rigidBody?.translation();
-  // if (hero.model?.position) hero.model.position.set();
+  controls.target.set(pos.x, pos.y, pos.z);
+  if (hero.model?.position)
+    hero.model.position.set(pos?.x ?? 0, pos?.y ?? 0, pos?.z ?? 0);
 
   controls.update();
 }
